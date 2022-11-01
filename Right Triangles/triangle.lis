@@ -1,0 +1,253 @@
+     1                                  ;****************************************************************************************************************************
+     2                                  ;Program name: "Triangle".  This program takes in the user input of height and width in float and calculates perimeter and average side length. Copyright (C) 2021 Johnson Tong.                                                                           *
+     3                                  ;                                                                                                                           *
+     4                                  ;This file is part of the software program "Trianle".                                                                   *
+     5                                  ;Triangle is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License   *
+     6                                  ;version 3 as published by the Free Software Foundation.                                                                    *
+     7                                  ;Triangle is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied          *
+     8                                  ;warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.     *
+     9                                  ;A copy of the GNU General Public License v3 is available here:  <https:;www.gnu.org/licenses/>.                            *
+    10                                  ;****************************************************************************************************************************
+    11                                  
+    12                                  
+    13                                  ;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3**
+    14                                  ;
+    15                                  ;Author information
+    16                                  ;  Author name: Juan Uriarte
+    17                                  ;  Author email: uriarte.juan@csu.fullerton.edu
+    18                                  ;
+    19                                  ;Program information
+    20                                  ;  Program name: Triangle
+    21                                  ;  Programming languages: One modules in C and one module in X86
+    22                                  ;  Date program began: 2022 Sept 7
+    23                                  ;  Date of last update: 2022 Sept 17
+    24                                  ;
+    25                                  ;  Files in this program: pythagoras.cpp, triangle.asm, r.sh
+    26                                  ;  Status: Finished.
+    27                                  ;
+    28                                  ;This file
+    29                                  ;   File name: triangle.asm
+    30                                  ;   Language: X86 with Intel syntax.
+    31                                  ;   Max page width: 132 columns
+    32                                  ;   Assemble: nasm -f elf64 -l triangle.lis -o triangle.o triangle.asm
+    33                                  
+    34                                  ;===== Begin code area ================================================================================================
+    35                                  
+    36                                  extern printf
+    37                                  extern scanf
+    38                                  extern pythagoras
+    39                                  extern atof
+    40                                  extern stdin
+    41                                  extern strchr
+    42                                  extern fgets
+    43                                  
+    44                                  global triangle
+    45                                  
+    46                                  segment .data
+    47 00000000 506C6561736520656E-     input_name_prompt db "Please enter your last name: ", 0
+    47 00000009 74657220796F757220-
+    47 00000012 6C617374206E616D65-
+    47 0000001B 3A2000             
+    48 0000001E 257300                  name_prompt db "%s", 0
+    49 00000021 506C6561736520656E-     input_title_prompt db "Please enter your title(Mr, Ms, Nurse, Engineer, etc): ", 0
+    49 0000002A 74657220796F757220-
+    49 00000033 7469746C65284D722C-
+    49 0000003C 204D732C204E757273-
+    49 00000045 652C20456E67696E65-
+    49 0000004E 65722C20657463293A-
+    49 00000057 2000               
+    50 00000059 257300                  title_prompt db "%s", 0
+    51 0000005C 506C6561736520656E-     input_side_triangle db "Please enter the sides of your triangle seperated by ws: ", 10 ,0
+    51 00000065 746572207468652073-
+    51 0000006E 69646573206F662079-
+    51 00000077 6F757220747269616E-
+    51 00000080 676C65207365706572-
+    51 00000089 617465642062792077-
+    51 00000092 733A200A00         
+    52 00000097 256C66256C6600          two_float db "%lf%lf", 0
+    53 0000009E 546865206C656E6774-     length_hypotenuse db "The length of the hypotenuse is %.9lf units", 10, 0
+    53 000000A7 68206F662074686520-
+    53 000000B0 6879706F74656E7573-
+    53 000000B9 6520697320252E396C-
+    53 000000C2 6620756E6974730A00 
+    54 000000CB 506C6561736520656E-     goodbye db "Please enjoy your triangles %s %s.", 10, 0
+    54 000000D4 6A6F7920796F757220-
+    54 000000DD 747269616E676C6573-
+    54 000000E6 2025732025732E0A00 
+    55 000000EF 57726F6E672076616C-     badMessage db "Wrong value. Numbers have to be postive, please try again.", 10, 0
+    55 000000F8 75652E204E756D6265-
+    55 00000101 727320686176652074-
+    55 0000010A 6F20626520706F7374-
+    55 00000113 6976652C20706C6561-
+    55 0000011C 736520747279206167-
+    55 00000125 61696E2E0A00       
+    56                                  
+    57                                  
+    58                                  segment .bss
+    59 00000000 <res 0000001E>          name resb 30
+    60 0000001E <res 0000001E>          title resb 30
+    61                                  
+    62                                  
+    63                                  segment .text
+    64                                  
+    65                                  triangle:
+    66                                  ;Prolog ===== Insurance for any caller of this assembly module ========================================================
+    67                                  ;Any future program calling this module that the data in the caller's GPRs will not be modified.
+    68 00000000 55                      push rbp
+    69 00000001 4889E5                  mov  rbp,rsp
+    70 00000004 57                      push rdi                                                    ;Backup rdi
+    71 00000005 56                      push rsi                                                    ;Backup rsi
+    72 00000006 52                      push rdx                                                    ;Backup rdx
+    73 00000007 51                      push rcx                                                    ;Backup rcx
+    74 00000008 4150                    push r8                                                     ;Backup r8
+    75 0000000A 4151                    push r9                                                     ;Backup r9
+    76 0000000C 4152                    push r10                                                    ;Backup r10
+    77 0000000E 4153                    push r11                                                    ;Backup r11
+    78 00000010 4154                    push r12                                                    ;Backup r12
+    79 00000012 4155                    push r13                                                    ;Backup r13
+    80 00000014 4156                    push r14                                                    ;Backup r14
+    81 00000016 4157                    push r15                                                    ;Backup r15
+    82 00000018 53                      push rbx                                                    ;Backup rbx
+    83 00000019 9C                      pushf                                                       ;Backup rflags
+    84                                  
+    85                                  ;=================Calculate Triangle===================================================================================
+    86                                  
+    87                                  ;print last name prompt
+    88 0000001A B800000000              mov rax, 0
+    89 0000001F 48BF-                   mov rdi, input_name_prompt
+    89 00000021 [0000000000000000] 
+    90 00000029 E8(00000000)            call printf
+    91                                  
+    92                                  ;input for last name
+    93 0000002E B800000000              mov rax, 0
+    94 00000033 48BF-                   mov rdi, name
+    94 00000035 [0000000000000000] 
+    95 0000003D BE1E000000              mov rsi, 30
+    96 00000042 488B1425[00000000]      mov rdx,[stdin]
+    97 0000004A E8(00000000)            call fgets
+    98                                  ;erases memory since we use fgets, this is required when we use fgets
+    99 0000004F B800000000              mov rax, 0
+   100 00000054 48BF-                   mov rdi, name
+   100 00000056 [0000000000000000] 
+   101 0000005E BE0A000000              mov rsi, 10
+   102 00000063 E8(00000000)            call strchr
+   103 00000068 C60000                  mov byte[rax], 0
+   104                                  
+   105                                  ;print title prompt
+   106 0000006B B800000000              mov rax, 0
+   107 00000070 48BF-                   mov rdi, input_title_prompt
+   107 00000072 [2100000000000000] 
+   108 0000007A E8(00000000)            call printf
+   109                                  
+   110                                  ;input for title
+   111 0000007F B800000000              mov rax, 0
+   112 00000084 48BF-                   mov rdi, title
+   112 00000086 [1E00000000000000] 
+   113 0000008E BE1E000000              mov rsi, 30
+   114 00000093 488B1425[00000000]      mov rdx, [stdin]
+   115 0000009B E8(00000000)            call fgets
+   116                                  ;erases memory since we use fgets, fgets is a scanner that allows spaces
+   117 000000A0 B800000000              mov rax, 0
+   118 000000A5 48BF-                   mov rdi, title
+   118 000000A7 [1E00000000000000] 
+   119 000000AF BE0A000000              mov rsi, 10
+   120 000000B4 E8(00000000)            call strchr
+   121 000000B9 C60000                  mov byte[rax], 0
+   122                                  
+   123                                  ;Invalid Value Message when numbers are not postive, will triger caught
+   124                                  Error:
+   125 000000BC B800000000              mov rax, 0
+   126 000000C1 48BF-                   mov rdi, badMessage
+   126 000000C3 [EF00000000000000] 
+   127 000000CB E8(00000000)            call printf
+   128                                  
+   129                                  caught:
+   130                                  ;input side triangle prompt when numbers are not positive, 
+   131 000000D0 B800000000              mov rax, 0
+   132 000000D5 48BF-                   mov rdi, input_side_triangle
+   132 000000D7 [5C00000000000000] 
+   133 000000DF E8(00000000)            call printf
+   134                                  
+   135                                  ;input 2 floats for triangle; both values will be in xmm9 and xmm8
+   136 000000E4 B800000000              mov rax, 0      ;might be called again if number is negative
+   137 000000E9 48BF-                   mov rdi, two_float
+   137 000000EB [9700000000000000] 
+   138 000000F3 6AFF                    push qword -1
+   139 000000F5 4889E6                  mov rsi, rsp
+   140 000000F8 68E7030000              push qword 999
+   141 000000FD 4889E2                  mov rdx, rsp
+   142 00000100 E8(00000000)            call scanf
+   143 00000105 F2440F100C24            movsd xmm9, [rsp]      ;xmm9 is one float
+   144 0000010B 58                      pop rax
+   145 0000010C F2440F100424            movsd xmm8, [rsp]      ;xmm8 is other float
+   146 00000112 58                      pop rax
+   147                                  
+   148                                  ;---------------------------------
+   149                                  ;check for negative inputs
+   150 00000113 66450F57ED              xorpd xmm13, xmm13
+   151 00000118 66450F2ECD              ucomisd xmm9, xmm13
+   152 0000011D 769D                    jbe Error           ;jbe = jump below will trigger Error if not jump above to postive
+   153 0000011F 770C                    ja positive
+   154                                  ;output negative message
+   155 00000121 B800000000              mov rax, 0
+   156 00000126 E8(00000000)            call printf
+   157 0000012B EB79                    jmp finish
+   158                                  
+   159                                  positive:
+   160 0000012D 66450F57ED              xorpd xmm13, xmm13
+   161 00000132 66450F2EC5              ucomisd xmm8, xmm13
+   162 00000137 7683                    jbe Error
+   163 00000139 770C                    ja positive2
+   164                                  ;output negative message
+   165 0000013B B800000000              mov rax, 0
+   166 00000140 E8(00000000)            call printf
+   167 00000145 EB5F                    jmp finish
+   168                                  
+   169                                  positive2:
+   170                                  
+   171 00000147 F2450F10D1              movsd xmm10, xmm9   ;caculate hypotenuse
+   172 0000014C F2450F59C9              mulsd xmm9, xmm9
+   173 00000151 F2450F10D8              movsd xmm11, xmm8
+   174 00000156 F2450F59C0              mulsd xmm8, xmm8
+   175 0000015B F2450F58C8              addsd xmm9, xmm8
+   176 00000160 F2450F51D1              sqrtsd xmm10, xmm9
+   177                                  ;block
+   178                                  
+   179                                  
+   180 00000165 B801000000              mov rax, 1          ;display hypotenuse
+   181 0000016A 48BF-                   mov rdi, length_hypotenuse
+   181 0000016C [9E00000000000000] 
+   182 00000174 F2410F10C2              movsd xmm0, xmm10
+   183 00000179 E8(00000000)            call printf
+   184                                  
+   185                                  
+   186 0000017E B802000000              mov rax, 2
+   187 00000183 48BF-                   mov rdi, goodbye
+   187 00000185 [CB00000000000000] 
+   188 0000018D 48BE-                   mov rsi, title
+   188 0000018F [1E00000000000000] 
+   189 00000197 48BA-                   mov rdx, name
+   189 00000199 [0000000000000000] 
+   190 000001A1 E8(00000000)            call printf
+   191                                  
+   192                                  finish:
+   193 000001A6 F2410F10C2              movsd xmm0, xmm10
+   194                                  
+   195                                  ;===== Restore original values to integer registers ===================================================================
+   196 000001AB 9D                      popf                                                        ;Restore rflags
+   197 000001AC 5B                      pop rbx                                                     ;Restore rbx
+   198 000001AD 415F                    pop r15                                                     ;Restore r15
+   199 000001AF 415E                    pop r14                                                     ;Restore r14
+   200 000001B1 415D                    pop r13                                                     ;Restore r13
+   201 000001B3 415C                    pop r12                                                     ;Restore r12
+   202 000001B5 415B                    pop r11                                                     ;Restore r11
+   203 000001B7 415A                    pop r10                                                     ;Restore r10
+   204 000001B9 4159                    pop r9                                                      ;Restore r9
+   205 000001BB 4158                    pop r8                                                      ;Restore r8
+   206 000001BD 59                      pop rcx                                                     ;Restore rcx
+   207 000001BE 5A                      pop rdx                                                     ;Restore rdx
+   208 000001BF 5E                      pop rsi                                                     ;Restore rsi
+   209 000001C0 5F                      pop rdi                                                     ;Restore rdi
+   210 000001C1 5D                      pop rbp                                                     ;Restore rbp
+   211                                  
+   212 000001C2 C3                      ret
